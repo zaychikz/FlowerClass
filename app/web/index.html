@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>AI Project</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        background-color: white;
+        margin: 0;
+        padding: 0;
+        text-align: center;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        height: 100vh;
+      }
+
+      .img-container img {
+        max-width: 400px;
+        max-height: 400px;
+      }
+
+      .rounded-button {
+        background-color: rgb(
+          174,
+          129,
+          224
+        );
+        color: white;
+        border: none;
+        border-radius: 20px;
+        padding: 10px 20px;
+        margin: 10px;
+        cursor: pointer;
+      }
+
+      #remove-image {
+        background-color: rgb(255, 91, 91);
+        color: white;
+        border: none;
+        border-radius: 20px;
+        padding: 10px 20px;
+        margin: 10px;
+        cursor: pointer;
+        display: none;
+      }
+
+      #predict-button {
+        background-color: green;
+        color: white;
+        border: none;
+        border-radius: 20px;
+        padding: 10px 20px;
+        margin: 10px;
+        cursor: pointer;
+        display: none;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>รูปภาพ</h1>
+    <div class="img-container">
+      <img id="preview-image" src="" alt="รูปภาพ" />
+    </div>
+    <h3 id="res"></h3>
+    <button id="choose-image" class="rounded-button">เลือกรูปภาพ</button>
+    <button id="remove-image" class="rounded-button">ลบรูปภาพ</button>
+    <button id="predict-button" class="rounded-button">ทำนาย</button>
+
+    <input
+      type="file"
+      id="image-upload"
+      accept="image/*"
+      style="display: none"
+    />
+
+    <script>
+      var base64String = "";
+      const resultDiv = document.getElementById("res");
+      // เมื่อกดปุ่ม "เลือกรูปภาพ" ถูกคลิก
+      document
+        .getElementById("choose-image")
+        .addEventListener("click", function () {
+          document.getElementById("image-upload").click();
+        });
+
+      // เมื่อไฟล์รูปภาพถูกเลือก
+      document
+        .getElementById("image-upload")
+        .addEventListener("change", function () {
+          const text = document.getElementById("res");
+          const previewImage = document.getElementById("preview-image");
+          const removeButton = document.getElementById("remove-image");
+          const predictButton = document.getElementById("predict-button");
+          const selectedImage = this.files[0];
+
+          if (selectedImage) {
+            const reader = new FileReader();
+
+            reader.onload = function (e) {
+              base64String = reader.result;
+              text.style.display = "block";
+              previewImage.src = e.target.result;
+              removeButton.style.display = "block";
+              predictButton.style.display = "block";
+            };
+
+            reader.readAsDataURL(selectedImage);
+          } else {
+            previewImage.src = "";
+            removeButton.style.display = "none";
+          }
+        });
+        document
+        .getElementById("predict-button")
+        .addEventListener("click", function () {
+          // ตรวจสอบว่ามีรูปภาพที่เลือกหรือไม่
+          if (!base64String) {
+            alert("กรุณาเลือกรูปภาพก่อนทำนาย");
+            return;
+          }
+      
+          // ทำคำขอไปยังเซิร์ฟเวอร์ API สำหรับการทำนาย
+          fetch("http://localhost:5000/api/flower", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ img: base64String }),
+          })
+            .then((response) => response.json())
+            .then((data) => {
+              // แสดงผลการทำนายในหน้าเว็บ
+              resultDiv.innerHTML = "รูปนี้คือ: " + data.sport;
+            })
+            .catch((error) => {
+              console.error("เกิดข้อผิดพลาดในการเรียก API:", error);
+            });
+        });
+      // เมื่อปุ่ม "ลบรูปภาพ" ถูกคลิก
+      document
+        .getElementById("remove-image")
+        .addEventListener("click", function () {
+          const previewImage = document.getElementById("preview-image");
+          const removeButton = document.getElementById("remove-image");
+          const removeButton2 = document.getElementById("predict-button");
+          const uploadInput = document.getElementById("image-upload");
+          resultDiv.innerHTML = "";
+          previewImage.src = "";
+          removeButton.style.display = "none";
+          removeButton2.style.display = "none";
+          uploadInput.value = ""; // เคลียร์ค่าใน input ในกรณีที่มีการเลือกไฟล์
+        });
+    </script>
+  </body>
+</html>
